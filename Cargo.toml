@@ -1,0 +1,15 @@
+[package]
+name = "algorithms"
+version = "0.1.0"
+authors = ["MING YIN （殷明） <mingyin@trip.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+rand="0.7.0"
+criterion = "0.3"
+
+[[bench]]
+name = "sorting_benchmark"
+harness = false
