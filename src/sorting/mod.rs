@@ -192,6 +192,7 @@ mod tests {
         use super::quick_sort_recursive;
         use super::quick_sort_dual_pivots;
         use super::tim_sort;
+        use super::heap_sort;
 
         use rand::Rng;
         use std::time::{Instant};
@@ -202,6 +203,7 @@ mod tests {
         let mut shell_v = [0; 50000];
         let mut quick_v = [0; 50000];
         let mut tim_v = [0; 50000];
+        let mut heap_v = [0; 50000];
 
         for i in 0..50000 {
             let mut rng = rand::thread_rng();
@@ -213,6 +215,7 @@ mod tests {
             shell_v[i] = gen_value;
             quick_v[i] = gen_value;
             tim_v[i] = gen_value;
+            heap_v[i] = gen_value;
         }
 
 
@@ -278,8 +281,18 @@ mod tests {
             println!("Time elapsed in tim_sort_duration is: {:?}", tim_sort_duration);
             assert_eq!(is_sorted(&tim_v), true);
         });
-        tim.join().unwrap();
 
+        let heap = thread::spawn(move || {
+            // 堆排序
+            let start_heap_sort = Instant::now();
+            heap_sort(&mut heap_v);
+            let heap_sort_duration = start_heap_sort.elapsed();
+            println!("Time elapsed in heap_sort_duration is: {:?}", heap_sort_duration);
+            assert_eq!(is_sorted(&heap_v), true);
+        });
+
+        heap.join().unwrap();
+        tim.join().unwrap();
         selection.join().unwrap();
         bubble.join().unwrap();
         insertion.join().unwrap();
@@ -301,6 +314,7 @@ mod tests {
         use super::quick_sort_recursive;
         use super::quick_sort_dual_pivots;
         use super::tim_sort;
+        use super::heap_sort;
         use rand::Rng;
         use std::time::{Instant};
         let mut selection_v = [0; 50000];
@@ -310,6 +324,7 @@ mod tests {
         let mut shell_v = [0; 50000];
         let mut quick_v = [0; 50000];
         let mut tim_v = [0; 50000];
+        let mut heap_v = [0; 50000];
 
 
         for i in 0..10000 {
@@ -320,6 +335,7 @@ mod tests {
             shell_v[i] = i as u16;
             quick_v[i] = i as u16;
             tim_v[i] = i as u16;
+            heap_v[i] = i as u16;
         }
 
         for i in 10000..20000 {
@@ -332,6 +348,7 @@ mod tests {
             shell_v[i] = gen_value;
             quick_v[i] = gen_value;
             tim_v[i] = gen_value;
+            heap_v[i] = gen_value;
         }
 
         for i in 20000..50000 {
@@ -342,6 +359,7 @@ mod tests {
             shell_v[i] = i as u16;
             quick_v[i] = i as u16;
             tim_v[i] = i as u16;
+            heap_v[i] = i as u16;
         }
         //
         let selection = thread::spawn(move || {
@@ -406,6 +424,18 @@ mod tests {
             println!("Time elapsed in tim_sort_duration is: {:?}", tim_sort_duration);
             assert_eq!(is_sorted(&tim_v), true);
         });
+
+        let heap = thread::spawn(move || {
+            // 堆排序
+            let start_heap_sort = Instant::now();
+            heap_sort(&mut heap_v);
+            let heap_sort_duration = start_heap_sort.elapsed();
+            println!("Time elapsed in heap_sort_duration is: {:?}", heap_sort_duration);
+            assert_eq!(is_sorted(&heap_v), true);
+        });
+
+        heap.join().unwrap();
+
         tim.join().unwrap();
 
         selection.join().unwrap();
@@ -430,6 +460,7 @@ mod tests {
         use super::quick_sort_recursive;
         use super::quick_sort_dual_pivots;
         use super::tim_sort;
+        use super::heap_sort;
         use rand::Rng;
         use std::time::{Instant};
         let mut selection_v = [0; 50000];
@@ -439,6 +470,7 @@ mod tests {
         let mut shell_v = [0; 50000];
         let mut quick_v = [0; 50000];
         let mut tim_v = [0; 50000];
+        let mut heap_v = [0; 50000];
 
 
         for i in 0..50000 {
@@ -449,6 +481,7 @@ mod tests {
             shell_v[i] = i as u16;
             quick_v[i] = i as u16;
             tim_v[i] = i as u16;
+            heap_v[i] = i as u16;
         }
 
         //
@@ -514,6 +547,18 @@ mod tests {
             println!("Time elapsed in tim_sort_duration is: {:?}", tim_sort_duration);
             assert_eq!(is_sorted(&tim_v), true);
         });
+
+        let heap = thread::spawn(move || {
+            // 堆排序
+            let start_heap_sort = Instant::now();
+            heap_sort(&mut heap_v);
+            let heap_sort_duration = start_heap_sort.elapsed();
+            println!("Time elapsed in heap_sort_duration is: {:?}", heap_sort_duration);
+            assert_eq!(is_sorted(&heap_v), true);
+        });
+
+        heap.join().unwrap();
+
         tim.join().unwrap();
 
         selection.join().unwrap();
@@ -537,6 +582,7 @@ mod tests {
         use super::quick_sort_recursive;
         use super::quick_sort_dual_pivots;
         use super::tim_sort;
+        use super::heap_sort;
         use std::time::{Instant};
         let mut selection_v = [0; 50000];
         let mut bubble_v = [0; 50000];
@@ -545,7 +591,7 @@ mod tests {
         let mut shell_v = [0; 50000];
         let mut quick_v = [0; 50000];
         let mut tim_v = [0; 50000];
-
+        let mut heap_v = [0; 50000];
 
         for i in (0..50000).rev() {
             selection_v[i] = 50000 - i;
@@ -555,6 +601,7 @@ mod tests {
             shell_v[i] = 50000 - i;
             quick_v[i] = 50000 - i;
             tim_v[i] = 50000 - i;
+            heap_v[i] = 50000 - i;
         }
 
         let selection = thread::spawn(move || {
@@ -620,8 +667,18 @@ mod tests {
             println!("Time elapsed in tim_sort_duration is: {:?}", tim_sort_duration);
             assert_eq!(is_sorted(&tim_v), true);
         });
-        tim.unwrap().join().unwrap();
 
+        let heap = thread::Builder::new().stack_size(32 * 1024 * 1024).spawn(move || {
+            // 堆排序
+            let start_heap_sort = Instant::now();
+            heap_sort(&mut heap_v);
+            let heap_sort_duration = start_heap_sort.elapsed();
+            println!("Time elapsed in heap_sort_duration is: {:?}", heap_sort_duration);
+            assert_eq!(is_sorted(&heap_v), true);
+        });
+
+        heap.unwrap().join().unwrap();
+        tim.unwrap().join().unwrap();
         selection.join().unwrap();
         bubble.join().unwrap();
         insertion.join().unwrap();
