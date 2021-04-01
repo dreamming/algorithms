@@ -11,6 +11,8 @@ pub use self::quick_sort::quick_sort_recursive;
 pub use self::selection_sort::selection_sort;
 pub use self::shell_sort::shell_sort;
 pub use self::tim_sort::tim_sort;
+pub use self::heap_sort::heap_sort;
+
 
 mod bubble_sort;
 mod selection_sort;
@@ -20,6 +22,7 @@ mod shell_sort;
 mod quick_sort;
 mod merge_sort;
 mod tim_sort;
+mod heap_sort;
 
 pub fn is_sorted<T>(arr: &[T]) -> bool
     where T: Ord
@@ -67,6 +70,7 @@ mod tests {
         use super::quick_sort_recursive;
         use super::quick_sort_dual_pivots;
         use super::tim_sort;
+        use super::heap_sort;
         use rand::Rng;
         use std::time::{Instant};
         let mut selection_v = [0; 50000];
@@ -76,6 +80,7 @@ mod tests {
         let mut shell_v = [0; 50000];
         let mut quick_v = [0; 50000];
         let mut tim_v = [0; 50000];
+        let mut heap_v = [0; 50000];
 
         for i in 0..50000 {
             let mut rng = rand::thread_rng();
@@ -87,6 +92,7 @@ mod tests {
             shell_v[i] = gen_value;
             quick_v[i] = gen_value;
             tim_v[i] = gen_value;
+            heap_v[i] = gen_value;
         }
 
 
@@ -117,7 +123,7 @@ mod tests {
             println!("Time elapsed in insertion_sort_duration is: {:?}", insertion_sort_duration);
             assert_eq!(is_sorted(&insertion_v), true);
         });
-
+        //
         let cocktail = thread::spawn(move || {
             // 鸡尾酒排序
             let start_cocktail_sort = Instant::now();
@@ -126,7 +132,7 @@ mod tests {
             println!("Time elapsed in cocktail_sort_duration is: {:?}", cocktail_sort_duration);
             assert_eq!(is_sorted(&cocktail_v), true);
         });
-
+        //
         let shell = thread::spawn(move || {
             // 希尔排序
             let start_shell_sort = Instant::now();
@@ -153,14 +159,24 @@ mod tests {
             println!("Time elapsed in tim_sort_duration is: {:?}", tim_sort_duration);
             assert_eq!(is_sorted(&tim_v), true);
         });
-        tim.join().unwrap();
 
+        let heap = thread::spawn(move || {
+            // 堆排序
+            let start_heap_sort = Instant::now();
+            heap_sort(&mut heap_v);
+            let heap_sort_duration = start_heap_sort.elapsed();
+            println!("Time elapsed in heap_sort_duration is: {:?}", heap_sort_duration);
+            assert_eq!(is_sorted(&heap_v), true);
+        });
+
+        heap.join().unwrap();
+        tim.join().unwrap();
+        shell.join().unwrap();
+        quick.join().unwrap();
         selection.join().unwrap();
         bubble.join().unwrap();
         insertion.join().unwrap();
         cocktail.join().unwrap();
-        shell.join().unwrap();
-        quick.join().unwrap();
     }
 
     #[test]

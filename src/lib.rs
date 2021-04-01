@@ -151,6 +151,21 @@ mod tests {
         println!("Time elapsed in sort_duration is: {:?}", sort_duration);
         assert_eq!(is_sorted(&v), true);
     }
+
+    #[test]
+    fn heap_sort_random() {
+        let mut v = [0; 50000];
+        for i in 0..v.len() {
+            let mut rng = rand::thread_rng();
+            let gen_value: u8 = rng.gen();
+            v[i] = gen_value;
+        }
+        let start_sort = Instant::now();
+        sorting::heap_sort(&mut v);
+        let sort_duration = start_sort.elapsed();
+        println!("Time elapsed in sort_duration is: {:?}", sort_duration);
+        assert_eq!(is_sorted(&v), true);
+    }
 }
 
 pub fn merge_sort_random() {
@@ -263,6 +278,16 @@ pub fn tim_sort_random() {
         v[i] = gen_value;
     }
     sorting::tim_sort(&mut v);
+}
+
+pub fn heap_sort_random() {
+    let mut v = [0; 50000];
+    for i in 0..v.len() {
+        let mut rng = rand::thread_rng();
+        let gen_value: u32 = rng.gen();
+        v[i] = gen_value;
+    }
+    sorting::heap_sort(&mut v);
 }
 
 // FEW UNIQUES
