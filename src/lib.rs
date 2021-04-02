@@ -311,6 +311,16 @@ pub fn quick_sort_dual_pivot_few_uniques() {
     sorting::quick_sort_dual_pivots(&mut v);
 }
 
+pub fn quick_sort_random() {
+    let mut v = [0; 50000];
+    for i in 0..v.len() {
+        let mut rng = rand::thread_rng();
+        let gen_value: u32 = rng.gen();
+        v[i] = gen_value;
+    }
+    sorting::quick_sort_recursive(&mut v);
+}
+
 pub fn shell_sort_few_uniques() {
     let mut v = [0; 50000];
     for i in 0..50000 {
