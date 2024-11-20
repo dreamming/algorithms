@@ -1,21 +1,47 @@
 package com.java;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.PriorityQueue;
 import java.util.Comparator;
 import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
+
+
+class Vnf {
+
+    private Integer no;
+    private Integer vCPU;
+
+    public Vnf(Integer no,Integer vCPU){
+        this.no = no;
+        this.vCPU = vCPU;
+    }
+
+    public String vnfInfo(){
+        return "NF"+this.no+"("+this.vCPU+" vCPU)";
+    }
+
+    public Integer getVCPU(){
+        return vCPU;
+    }
+
+    public Integer getVnfNum(){
+        return this.vCPU;
+    }
+
+}
 
 class PhysicalNode {
 
@@ -24,6 +50,7 @@ class PhysicalNode {
     private Integer nodeNum;
     private Integer vCPU;
     private Integer remainVCPU;
+    private List<Vnf> resideVNFs = new ArrayList<>();
 
     public PhysicalNode(Integer nodeNum){
         // rand 3 ~ 15 vCPU
@@ -31,6 +58,23 @@ class PhysicalNode {
         this.vCPU = vCPU;
         this.remainVCPU = vCPU;
         this.nodeNum = nodeNum;
+    }
+
+    public String physicalNodeWithResideVNFsInfo(){
+        String preResideInfo = "{Node "+this.getNodeNum()+"}";
+        if (resideVNFs.isEmpty()) {
+            return preResideInfo;
+        }
+        String resideVNFsInfo = resideVNFs.stream().map(vnf->vnf.vnfInfo()).collect(Collectors.joining(","));
+        return preResideInfo + " {" + resideVNFsInfo + "}";
+    }
+
+    public void resetResideVNF(){
+        resideVNFs.clear();
+    }
+
+    public void addResideVNF(Vnf vnf ){
+        resideVNFs.add(vnf);
     }
 
     public String physicalNodeRemainVCPU(){
@@ -102,6 +146,7 @@ class SfcInfra {
         buildSfcInfra();
     }
 
+    // build SFC infra graph
     private void buildSfcInfra(){
         // for vertex 1
         this.addEdge(0, 1);
@@ -160,10 +205,12 @@ class SfcInfra {
         edge++;
     }
 
+    // get neighbor edges
     public List<NodeEdge> neighborNodeEdge(Integer v) {
         return adj[v];
     }
 
+    // build one-way node link delay info
     public List<String> oneWayNodeLinkDelay(){
         List<String> oneWayNodeLinkDelayDesc = new ArrayList<>();
         Set<String> printedEdges = new HashSet<>();
@@ -181,6 +228,7 @@ class SfcInfra {
         return oneWayNodeLinkDelayDesc;
     }
 
+    // build two-way node link delay info
     public List<String> biWayNodeLinkDelay(){
         List<String> biWayNodeLinkDelayDesc = new ArrayList<>();
         for (int i = 0; i < vertex; i++) {
@@ -192,6 +240,7 @@ class SfcInfra {
         return biWayNodeLinkDelayDesc;
     }
 
+    // get the description of the physical node capacityCPU
     public List<String> physicalNodeCapacityCPU(){
         List<String> capacityCPUdesc = new ArrayList<>();
         for (PhysicalNode physicalNode : physicalNodes) {
@@ -200,6 +249,7 @@ class SfcInfra {
         return capacityCPUdesc;
     }
 
+    // get the description of the physical node remainCPU
     public List<String> physicalNodeRemainCPU(){
         List<String> remainCPUdesc = new ArrayList<>();
         for (PhysicalNode physicalNode : physicalNodes) {
@@ -208,10 +258,12 @@ class SfcInfra {
         return remainCPUdesc;
     }
 
+    // get the number of vertexs
     public Integer V() {
         return vertex;
     }
 
+    // get the number of edges
     public Integer E() {
         return edge;
     }
@@ -262,15 +314,49 @@ public class SFCSimulator {
     }
 
     public void savePhysicalInfraBeforePlacement(){
+        List<String> nodeBforePlacement = infrastructure.physicalNodeCapacityCPU();
+        saveFile("Physical_infrastructure_Before_Placement.txt", nodeBforePlacement);
 
     }
 
     public void savePhysicalInfraAfterPlacement(){
+        List<String> nodeAfterPlacement = infrastructure.physicalNodeRemainCPU();
+        saveFile("Physical_infrastructure_After_Placement.txt", nodeAfterPlacement);
 
     }
 
-    public void savePhysicalLinkDelay(){
+    public void saveOneWayPhysicalLinkDelay(){
+        List<String> oneWayNodeLink = infrastructure.oneWayNodeLinkDelay();
+        saveFile("Physical_link_delay.txt", oneWayNodeLink);
+    }
 
+    public void saveBiWayPhysicalLinkDelay(){
+        List<String> biWayNodeLink = infrastructure.biWayNodeLinkDelay();
+        saveFile("Physical_link_delay.txt", biWayNodeLink);
+    }
+
+    private void saveFile(String fileName, List<String> contents){
+        Path filePath = Paths.get(fileName);
+        try {
+            Files.write(filePath, contents);
+            System.out.println("File written successfully.");
+        } catch (IOException e) {
+            System.out.println("An error occurred: " + e.getMessage());
+        }
+    }
+
+
+    public static void realWorldSimulateSFC(List<Integer> sourceVertexs){
+        SFCSimulator simulator = new SFCSimulator();
+        List<Map<Boolean,String>> allSFCResult = simulator.simulateSFC(sourceVertexs);
+        List<String> sfcResult = allSFCResult.stream()
+        .flatMap(map -> map.values().stream())
+        .collect(Collectors.toList());
+
+        simulator.savePhysicalInfraBeforePlacement();
+        simulator.saveBiWayPhysicalLinkDelay();
+        simulator.saveFile("SFCs.txt",sfcResult);
+        simulator.savePhysicalInfraAfterPlacement();
     }
 
     public List<Map<Boolean,String>> simulateSFC(List<Integer> sourceVertexs){
@@ -288,7 +374,10 @@ public class SFCSimulator {
         return allSFCResult;
     }
 
-
+    // simulate different SFC result.
+    // 0 <= validSFCs <= sourceVertexs.size().
+    // you can setup various sourceVertex.
+    // set validSFCs = 2 then return 2 valid SFCs.
     public static SFCSimulator showValidSFC(List<Integer> sourceVertexs, Integer validSFCs){
         while (true) {
             SFCSimulator simulator = new SFCSimulator();
@@ -297,14 +386,14 @@ public class SFCSimulator {
             .flatMap(map -> map.keySet().stream())
             .filter(key -> key)
             .count();
-            // boolean allTrue = allSFCResult.stream().allMatch(map -> map.keySet().stream().allMatch(key -> key));
             if (trueKeyCount == validSFCs) {
                 List<String> allStrings = allSFCResult.stream()
                 .flatMap(map -> map.values().stream())
                 .collect(Collectors.toList());
-                for (String string : allStrings) {
-                    System.out.println(string);
-                }
+                simulator.savePhysicalInfraBeforePlacement();
+                simulator.saveBiWayPhysicalLinkDelay();
+                simulator.saveFile("SFCs.txt",allStrings);
+                simulator.savePhysicalInfraAfterPlacement();
                 return simulator;
             }
         }
@@ -312,15 +401,18 @@ public class SFCSimulator {
 
     public Map<Boolean,String> simulateSpecificSFC(Integer vnfs,Integer thresholdDelay,Integer initVertex,Integer sfcNo, Random randvCPUs){
         Map<Boolean,String> result = new HashMap<>();
+
+        // build vNFs required vCPU info
         StringBuilder sBuilder = new StringBuilder();
         String sfc = "SFC"+sfcNo;
         sBuilder.append(sfc+":\n");
         String vnfDes = sfc +" have " + vnfs +" vNFs, ";
         sBuilder.append(vnfDes);
-        PriorityQueue<Integer> dq = new PriorityQueue<>(Comparator.reverseOrder());
+        Deque<Vnf> vNfsResources = new ArrayDeque<>();
         for (int j = 1; j <= vnfs; j++) {
             int vCPU = randvCPUs.ints(1, 4).findAny().getAsInt();
-            dq.add(vCPU);
+            Vnf vnf = new Vnf(j, vCPU);
+            vNfsResources.add(vnf);
             String vCPUDesc = "vNF"+j+" requires "+vCPU+" vCPUs";
             sBuilder.append(vCPUDesc);
             if(j == vnfs){
@@ -332,6 +424,8 @@ public class SFCSimulator {
         String depayThreshold = "Delay threshold for "+sfc+" = " + thresholdDelay +" ms";
         sBuilder.append(depayThreshold);
         sBuilder.append("\n");
+
+        // start to find the shortest path with Dijkstra's Algorithm
         Integer size = getInfrastructure().V();
         PhysicalNode[] physicalNodes = getPhysicalNodes();
         List<PhysicalNode> preNodeList = new ArrayList<>();
@@ -342,28 +436,77 @@ public class SFCSimulator {
         String miniDelayDesc = "Delay on the shortest path = " + miniDelay +" ms";
         sBuilder.append(miniDelayDesc);
         sBuilder.append("\n");
+
+        // miniDelay does not meet the thresholdDelay requirement
         if (thresholdDelay < miniDelay || miniDelay < 0) {
             String invalidDesc = "there is no placement for "+sfc;
             sBuilder.append(invalidDesc);
             sBuilder.append("\n\r");
             result.put(Boolean.FALSE,sBuilder.toString());
-        } else {
-            String showPhysicalTop = IntStream.range(0, preNodeList.size()).mapToObj(index -> {
-                PhysicalNode node = preNodeList.get(index);
-                Integer deductResource = Optional.ofNullable(dq.poll()).orElse(0);
-                Integer num = node.getNodeNum();
-                // Integer remainVCPU = node.remainVCPU() - deductResource;
-                // node.setRemainVCPU(remainVCPU);
-                // return "{Node "+num+ "} {NF" + (index+1) + "("+deductResource+" vCPUs)}";
-                return "{Node "+num+ "}";
-            }).collect(Collectors.joining(" -> "));
-            sBuilder.append(showPhysicalTop);
+            return result;
+        } 
+
+        // check if resource dedection can meet the requirement
+        Boolean validResource = consumeNodeResource(preNodeList,vNfsResources);
+        if (!validResource) {
+            // clean current SFC's vNFs
+            resetResideVNFs(preNodeList);
+            String invalidDesc = "there is no placement for "+sfc;
+            sBuilder.append(invalidDesc);
             sBuilder.append("\n\r");
-            result.put(Boolean.TRUE,sBuilder.toString());
+            result.put(Boolean.FALSE,sBuilder.toString());
+            return result;
         }
+        // build valid SFC path
+        String showPhysicalTop = buildSFCPathInfo(preNodeList);
+        sBuilder.append(showPhysicalTop);
+        sBuilder.append("\n\r");
+        result.put(Boolean.TRUE,sBuilder.toString());
+        // clean current SFC's vNFs
+        resetResideVNFs(preNodeList);
         return result;
     }
 
+
+    public String buildSFCPathInfo(List<PhysicalNode> physicalNodes){
+        return "Source " +
+            physicalNodes.stream()
+                         .limit(physicalNodes.size() - 1) // 获取除最后一个节点外的所有节点
+                         .map(node -> node.physicalNodeWithResideVNFsInfo())
+                         .collect(Collectors.joining(" -> ")) +
+            " -> Destination " + 
+            physicalNodes.get(physicalNodes.size() - 1).physicalNodeWithResideVNFsInfo();            
+        // return "Source " + physicalNodes.stream().map(node -> node.physicalNodeWithResideVNFsInfo()).collect(Collectors.joining(" -> "));
+    }
+
+    // reset resideVNFs when each SFC finished
+    public void resetResideVNFs(List<PhysicalNode> physicalNodes){
+        for (PhysicalNode physicalNode : physicalNodes) {
+            physicalNode.resetResideVNF();
+        }
+    }
+
+    // vNFs consume physical node resources
+    public Boolean consumeNodeResource(List<PhysicalNode> physicalNodePath,Deque<Vnf> vNFsResources){
+        for (PhysicalNode physicalNode : physicalNodePath) {
+            Integer remainVCPU = physicalNode.remainVCPU();
+            while (!vNFsResources.isEmpty()) {
+                Vnf vnf = vNFsResources.peek();
+                Integer vNFVCPU = vnf.getVCPU();
+                if (remainVCPU >= vNFVCPU) {
+                    remainVCPU = remainVCPU - vNFVCPU;
+                    physicalNode.setRemainVCPU(remainVCPU);
+                    physicalNode.addResideVNF(vnf);
+                    vNFsResources.poll();
+                } else {
+                    break;
+                }  
+            }
+        }
+        return vNFsResources.isEmpty();
+    }
+
+    // build shortest path
     private void buildPrePath(Integer[] predecessor, int current, List<PhysicalNode> prePath,PhysicalNode[] physicalNodes) {
         if (current == -1) {
             return;
@@ -372,12 +515,13 @@ public class SFCSimulator {
         prePath.add(physicalNodes[current]);
     }
 
-    // Dijkstra's algorithm
+    // Dijkstra's algorithm (maybe with resource deduction optimization?)
     private Integer shortestPathDelay(Integer initVertex, Integer[] predecessor){
         SfcInfra sfcInfra = getInfrastructure();
         Integer size = sfcInfra.V();
-        int INF = 0x3f3f3f3f;
-        int[] distance = new int[size];
+        // almost int max value
+        Integer INF = 0x3f3f3f3f;
+        Integer[] distance = new Integer[size];
         Arrays.fill(distance, INF);
         distance[initVertex] = 0;
         PriorityQueue<int[]> pq = new PriorityQueue<int[]>(size, Comparator.comparingInt(o -> o[1]));
@@ -386,44 +530,28 @@ public class SFCSimulator {
             int[] node = pq.poll();
             Integer nodeNum = node[0];
             Integer miniDelay = node[1];
-                for (NodeEdge adjNodeEdge : sfcInfra.neighborNodeEdge(nodeNum)) {
-                    Integer adjNodeNum = adjNodeEdge.getToNodeNum();
-                    Integer adjMiniDelay = adjNodeEdge.getToDelay() + miniDelay;
-                    if (adjMiniDelay < distance[adjNodeNum]) {
-                        distance[adjNodeNum] = adjMiniDelay;
-                        predecessor[adjNodeNum] = nodeNum;
-                        pq.add(new int[]{adjNodeNum,adjMiniDelay});
-                    }
+            for (NodeEdge adjNodeEdge : sfcInfra.neighborNodeEdge(nodeNum)) {
+                Integer adjNodeNum = adjNodeEdge.getToNodeNum();
+                Integer adjMiniDelay = adjNodeEdge.getToDelay() + miniDelay;
+                if (adjMiniDelay < distance[adjNodeNum]) {
+                    distance[adjNodeNum] = adjMiniDelay;
+                    predecessor[adjNodeNum] = nodeNum;
+                    pq.add(new int[]{adjNodeNum,adjMiniDelay});
                 }
+            }
         }
         return distance[size-1] == INF ? -1:distance[size-1];
     }
 
+
+    // SFC1(3 ~ 7 VNFs), VNFs(1 ~ 3 vCPUs), total 10 ~ 15 ms delay
+    // SFC2(3 ~ 7 VNFs), VNFs(1 ~ 3 vCPUs), total 10 ~ 15 ms delay
+    // SFC3(3 ~ 7 VNFs), VNFs(1 ~ 3 vCPUs), total 10 ~ 15 ms delay
     public static void main(String[] args) {
-            // SFCSimulator simulator = SFCSimulator.showValidSFC(Arrays.asList(0,1,2),3);
-            // simulator.showBiWayPhysicalNodeLinkDelay();
-            // System.out.println();
-            // simulator.showPhysicalNodeCapacityCPU();
-            // System.out.println();
-            // simulator.showPhysicalNodeRemainCPU();
-            // System.out.println();
-            // real world
-            SFCSimulator simulator = new SFCSimulator();
-            List<Map<Boolean,String>> allSFCResult = simulator.simulateSFC(Arrays.asList(0,1,2));
-            List<String> allStrings = allSFCResult.stream()
-            .flatMap(map -> map.values().stream())
-            .collect(Collectors.toList());
-            for (String string : allStrings) {
-                System.out.println(string);
-            }
+        // for real world
+        // SFCSimulator.realWorldSimulateSFC(Arrays.asList(0,1,2));
 
-        // forShowAllValidSFCOutput();        
-        // SFC1(3 ~ 7 VNFs), VNFs(1 ~ 3 vCPUs), total 10 ~ 15 ms delay
-        // SFC2(3 ~ 7 VNFs), VNFs(1 ~ 3 vCPUs), total 10 ~ 15 ms delay
-        // SFC3(3 ~ 7 VNFs), VNFs(1 ~ 3 vCPUs), total 10 ~ 15 ms delay
-
-        
-    }
-
-    
+        // for test world
+        SFCSimulator.showValidSFC(Arrays.asList(0,1,2),2);
+    } 
 }
