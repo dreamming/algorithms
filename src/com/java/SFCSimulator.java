@@ -469,14 +469,12 @@ public class SFCSimulator {
 
 
     public String buildSFCPathInfo(List<PhysicalNode> physicalNodes){
-        return "Source " +
-            physicalNodes.stream()
-                         .limit(physicalNodes.size() - 1) // 获取除最后一个节点外的所有节点
+        return "Source " +physicalNodes.stream()
+                         .limit(physicalNodes.size() - 1)
                          .map(node -> node.physicalNodeWithResideVNFsInfo())
                          .collect(Collectors.joining(" -> ")) +
             " -> Destination " + 
             physicalNodes.get(physicalNodes.size() - 1).physicalNodeWithResideVNFsInfo();            
-        // return "Source " + physicalNodes.stream().map(node -> node.physicalNodeWithResideVNFsInfo()).collect(Collectors.joining(" -> "));
     }
 
     // reset resideVNFs when each SFC finished
